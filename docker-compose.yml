@@ -1,0 +1,52 @@
+version: '3'
+services:
+  nginx:
+    image: nginx:latest
+    ports:
+      - 8080:80
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf
+    #  - ./www/html:/var/www/html
+      - ./server:/var/www
+    depends_on:
+      - php
+
+  php:
+    build: ./php
+    volumes:
+    #  - ./www/html:/var/www/html
+        - ./server:/var/www
+    depends_on:
+      - db
+
+  db:
+    image: mysql:5.7
+    container_name: db-host
+    ports:
+      - 13306:3306
+    volumes:
+      - ./mysql/data:/var/lib/mysql
+    environment:
+        MYSQL_DATABASE: mydatabase
+        MYSQL_ROOT_PASSWORD: password
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin:5
+    ports:
+      - 8888:80
+    depends_on:
+      - db
+
+  minio:
+    image: 'minio/minio'
+    container_name: minio
+    environment:
+        MINIO_ROOT_USER: minioadminuser
+        MINIO_ROOT_PASSWORD: minioadminpassword
+    entrypoint: bash
+    command: -c "/opt/bin/minio server /export --address :9999 --console-address :9001"
+    volumes:
+        - ./docker/minio/data:/export
+    ports:
+        - '9000:9999'
+        - '9001:9001'
